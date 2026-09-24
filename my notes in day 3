@@ -1,1 +1,472 @@
+IPV4 Subnetting:
+
+task1: design a network for accenture.com with 1750 agents, team leads, and project managers.Using 10.0.0.0/8 address space.
+
+Convert:1,750 = 11bits
+Subtract: /32 - 11bits = /21
+	10.0.0.0/21
+
+Insert i sa octet: /21 (3rd, 8i)
+	-10.0.8.0
+
+Network in accenture.com: 10.0.0.0 /21
+	First valid IP: 10.0.0.1
+	Last Valid IP: 10.0.7.254 (10.0.7.255 - 1)
+	Broadcast IP: 10.0.7.255 (10.0.8.0 - 1)
+
+Not network in accenture.com: 10.0.8.0 /?
+	
+
+task2: design a network for cognizant.com with 600 agents, team leads, and project managers.Using 10.0.0.0/8 address space.
+
+C: 600 = 10bits
+S: /32 - 10bits = /22
+	10.0.0.0 /22
+ 
+I: /22 (3rd, 4i)
+	10.0.4.0
+
+
+Network in cognizant.com: 10.0.0.0 /22
+	First valid IP (+1 NET): 10.0.0.1
+	Last Valid IP (-1 Broad): 10.0.3.254
+	Broadcast IP (-1 Not): 10.0.3.255
+
+Not network: 10.0.4.0 /?
+
+
+----------
+Network /22
+	10.0.0.0 /22 (3rd 4i)
+	Subnet
+        10.0.0.0 /22
+	10.0.4.0 /22
+	10.0.8.0 /22
+
+task3: design a network for ifosys.com with 37 pc's. Using 10.50.128.128/15 address space.
+
+C: 37 = 6bits
+S: /32 - 6bits = /26
+10.50.128.128/26
+
+I: /26 (4rt 64i)
+
+
+
+Network in cognizant.com: 10.50.128.128/26
+	First valid IP (+1 NET): 10.50.128.129
+	Last Valid IP (-1 Broad): 10.50.128.190
+	Broadcast IP (-1 Not): 10.50.128.191
+
+Not network: 10.50.128.192 /?
+
+subnets
+10.50.128.128 /26	128-191
+10.50.128.192 /26	192-128.255
+10.50.129.0 /26		129.0-129.63
+10.50.129.64 /26
+10.50.129.128 /26
+10.50.129.192 /26
+10.50.129.130 /26
+
+
+task4: design a network for tascus.com with 100 pc's. Using 192.168.192.0/19 address space.
+
+C: 100 = 7 bits
+S:  /32 - 7bits = /25
+192.168.192.0/25
+
+I: /25 (4rt, 128i)
+
+Network in tascus.com: 192.168.192.0
+	First valid IP (+1 NET): 192.168.192.1
+	Last Valid IP (-1 Broad): 192.168.192.126
+	Broadcast IP (-1 Not): 192.168.192.127
+
+Not network: 192.168.192.128 /?
+
+subnets
+192.168.192.0/25
+192.168.192.128/25
+192.168.193.0/25
+192.168.193.128/25
+192.168.194.0/25
+
+
+
+------------
+Login: root
+Pass: C1sc0123
+
+Get IP:
+rm -rf /etc/udev/rules.d/70-persistent-net.rules
+reboot
+
+Set NetAdapters:
+NetAdapter 1: NAT (208.8.8.0/24)
+NetAdapter 2: VMNet15 (10.255.10.0/24)
+NetAdapter 3: VMNet16 (10.69.255.0/29)
+
+!@cmd
+route add 172.16.29.0 mask 255.255.255.0 10.69.255.6
+
+--------------------------
+TemPlate_CoreSW:
+
+!@c1 - DHCP
+config t
+vlan 25
+ name TASKUS.com
+ exit
+Int vlan 25
+ no shut
+ ip add 192.168.192.1 255.255.255.128
+ip dhcp excluded-add 192.168.192.1 192.168.192.10
+ip dhcp pool TASKUS.com
+ network 192.168.192.0 255.255.255.128
+ default-router 192.168.192.1
+ domain-name TASKUS.com
+ dns-server 10.41.1.10
+ option 150 ip 10.41.100.8
+ end
+
+!@A! - LIPAT VLAN
+config t
+ Int e0/0
+  switchport mode access
+  switchport access vlan 25
+  do sh ip dhcp binding
+
+
+!@P1
+config t
+ int e0/0
+ no shut
+ ip add dhcp
+ end
+bp
+-----------------------
+
+Configure 
+192.168.192.128/25 (4th, 128i)
+First 192.168.192.129
+Last 192.168.192.254
+Broad 192.168.192.255
+Not: 192.168.193.0/25
+
+!@c1 - DHCP
+config t
+vlan 26
+ name TASKUS2.com
+ exit
+Int vlan 26
+ no shut
+ ip add 192.168.192.129 255.255.255.128
+ip dhcp excluded-add 192.168.192.129 192.168.192.179
+ip dhcp pool TASKUS2.com
+ network 192.168.192.128 255.255.255.128
+ default-router 192.168.192.1
+ domain-name TASKUS2.com
+ dns-server 10.41.1.10
+ option 150 ip 10.41.100.8
+ end
+
+!@A2 - LIPAT VLAN
+config t
+ Int e1/0
+  switchport mode access
+  switchport access vlan 26
+  do sh ip dhcp binding
+
+
+!@P2
+config t
+ int e1/0
+ no shut
+ ip add dhcp
+ end
+bp
+
+------------------
+Task 5: design a network for bdo.com with 777 pc's. Using 172.16.64.0/20 address space.
+configure c1 as DHCP server and s1 as a DHCP client for bdo
+-reserve 20 IP addresses
+-assign to VLAN 69
+
+
+C:  777=  10bits
+S:  /32 - 10 bits = /22
+
+
+I: 22/ (3rd, 4i)
+
+Network in tascus.com:  172.16.64.0/22
+	First valid IP (+1 NET): 172.16.64.1
+	Last Valid IP (-1 Broad): 172.16.67.254
+	Broadcast IP (-1 Not): 172.16.67.255
+
+Not network:  172.16.68.0 /?
+
+subnets
+172.16.64.0
+172.16.68.0
+172.16.72.0
+172.16.76.0
+172.16.80.0
+
+
+!@c1 - DHCP
+config t
+vlan 69
+ name bdo.com
+ exit
+Int vlan 69
+ no shut
+ ip add 172.16.64.1 255.255.252.0
+ip dhcp excluded-add 172.16.64.1 172.16.64.20
+ip dhcp pool bdo.com
+ network 172.16.64.1 255.255.252.0
+ default-router 172.16.64.1
+ domain-name bdo.com
+ dns-server 10.41.1.10
+ option 150 ip 10.41.100.8
+ exit
+
+ !
+ Int e1/0
+  switchport mode access
+  switchport access vlan 69
+  do sh ip dhcp binding
+
+
+!@S1
+config t
+ int e1/0
+  no shut
+  ip add dhcp
+ end
+bp
+------------------
+
+VLSM
+Task 5: Design a network for teleperformance.com with the ff:
+-admin dept: 14 hosts
+-fin dept: 39 hosts
+-it dept: 6 hosts
+-guests: 300 hosts
+
+use the available IP address space: 10.21.80.0/20
+
+
+C: 300 hosts = 9bits
+S: /32 - 9 = /23
+
+network (guests): 10.21.80.0/23 (3rd,2i)
+
+not: 10.21.82.0 /?
+
+-FIN Dept: 39 hosts 10.21.82.0 /?
+C: 39 = 6 bits
+S: /32 - 6bits = /26 (4th, 64i)
+network (fin): 10.21.82.0 /26
+not: 10.21.82.64 /?
+
+- admin dept: 14 hosts
+C: 14 = 4bits
+S: /32 - 4bits = /28 (4th, 16i)
+I: 
+
+network (admin): 10.21.82.64 /28
+not: 10.21.82.80
+
+
+--It dept 6 hosts
+C: 6 = 3bits
+S: /32 - 3 = /29 (4rth, 8i)
+network (IT): 10.21.82.80 /29
+not: 10.21.82.88 /?
+
+-------------------
+Task 6: Design a network for BCLO.com with the ff:
+-admin dept: 123 hosts
+-fin dept: 69 hosts
+-guests: 1,800 hosts
+
+use the available IP address space: 10.40.0.0/16
+
+--guets 1800 hosts 10.40.8.0
+C: 1800 = 11bits
+S: /32 - 11 = /21 (3rd, 8i)
+guests: 10.40.0.0 /21
+not: 10.40.8.0 /?
+
+--admin 123 hosts 10.40.8.0
+C: 123 = 7bits
+S: 32 - 7 = /25 (4th, 128i)
+addmin: 10.40.8.0 /25
+not: 10.40.8.128 /?
+
+--fin 10.40.8.128
+
+------------------------
+!@CoreTAAS
+conf t
+ ip routing
+ int fa0/9
+  no sw
+  ip add 10.100.69.136 255.255.255.192
+  no shut
+  end
+
+
+!@CoreBABA
+conf t
+ ip routing
+ int fa0/9
+  no sw
+  ip add 10.100.69.135 255.255.255.192
+  no shut
+  end
+
+-----------------
+finding the network
+
+1) 10.15.201.72 /27
+2) 192.168.115.15 /21
+3) 172.16.1.214 /25
+
+
+
+1) 10.15.201.72 /27
+STEP 1: octet & i
+	4th, 32i
+STEP 2: 0,32,64,96
+10.15.201.64
+
+2) 192.168.115.15 /21
+3rd 8i
+80,88,96,104,112,120
+192.168.112.0/21
+
+3) 172.16.1.214 /25
+4th 128i
+72.16.1.128 /25
+
+4) 192.168.55.137 /22
+3rd 4i
+44,48,52,56
+192.168.52.0 /22
+
+-----------------
+STATIC Route
+1) destination
+2) subnetmask
+3) next-hop / exit interface
+
+
+HOST STATIC ROUTE
+!@R1
+conf t
+ ip route 10.1.1.5 255.255.255.255 10.1.1.2
+ end
+ping 10.1.1.5
+------------------
+
+!@R1
+conf t
+ ip route 10.1.1.6 255.255.255.255 10.1.1.2
+ end
+ping 10.1.1.6
+
+--------
+RETURN TRAFFIC
+!@R1
+conf t
+ ip route 10.1.1.1 255.255.255.255 10.1.1.2
+ end
+ping 10.1.1.1
+
+!@R3
+conf t
+ ip route 10.1.1.1 255.255.255.255 10.1.1.2
+ end
+ping 10.1.1.1
+
+---------------
+Configure a static host route for R1 to Reach R2's loop IP 2.2.2.2
+!@R1
+conf t
+ ip route 2.2.2.2 255.255.255.255 10.1.1.2
+ end
+ping 2.2.2.2
+
+-------------------
+Configure a static host route for r1 to ping 10.1.1.10
+!@R1
+conf t
+ ip route 10.1.1.8 255.255.255.252 10.1.1.2
+ end
+ping 10.1.1.8
+
+!@R4
+conf t
+ ip route 10.1.1.0 255.255.255.252 10.1.1.9
+ end
+ping 10.1.1.1 
+
+!@R2
+conf t
+ ip route 10.1.1.8 255.255.255.252 10.1.1.6
+ end
+ping 10.1.1.8 
+
+-------------
+!@P1
+conf t
+ int e0/0
+  ip add 10.2.1.101 255.255.255.0
+  no shut
+  end
+
+!@P2
+conf t
+ int e1/0
+  ip add 10.2.1.102 255.255.255.0
+  no shut
+  end
+
+==========
+1 host static route
+2 network static route
+3 default
+4 floating static
+
+
+
+---------
+PATH selection rules
+1 longest prfix
+ex
+Static route 10.1.1.0 /24
+static route 10.1.1.128 /25 (this will be the longest prefix)
+O 10.1.0.0 /16
+
+!@R4
+conf t
+router eigrp 100
+ network 10.1.4.4 0.0.0.3
+ network 10.1.4.8 0.0.0.3
+ network 10.1.1.8 0.0.0.3
+ end
+
+
+!@R3
+conf t
+router eigrp 100
+ network 10.1.1.8 0.0.0.3
+ network 3.3.3.3 0.0.0.0
+ end
+
+
+
 
